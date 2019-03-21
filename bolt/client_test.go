@@ -12,6 +12,28 @@ func TestGetDB(t *testing.T) {
 	assert.NotNil(t, db)
 }
 
+func TestNextSequence(t *testing.T) {
+	boltClient := NewBoltClient("short-url.db", 0600)
+	seq, err := boltClient.NextSequence("shorturl")
+	assert.Nil(t, err)
+	assert.EqualValues(t, seq, 1)
+	seq, err = boltClient.NextSequence("shorturl")
+	assert.Nil(t, err)
+	assert.EqualValues(t, seq, 2)
+	seq, err = boltClient.NextSequence("shorturl")
+	assert.Nil(t, err)
+	assert.EqualValues(t, seq, 3)
+	seq, err = boltClient.NextSequence("shorturl")
+	assert.Nil(t, err)
+	assert.EqualValues(t, seq, 4)
+	seq, err = boltClient.NextSequence("shorturl")
+	assert.Nil(t, err)
+	assert.EqualValues(t, seq, 5)
+	seq, err = boltClient.NextSequence("shorturl")
+	assert.Nil(t, err)
+	assert.EqualValues(t, seq, 6)
+}
+
 func TestSetAndGetValue(t *testing.T) {
 	boltClient := NewBoltClient("short-url.db", 0600)
 	boltClient.Set("short", "sag/2$#", []byte("1"))
@@ -26,5 +48,4 @@ func TestSetAndGetValue(t *testing.T) {
 	v3, err := boltClient.Get("short", "+_()*(")
 	assert.Nil(t, err)
 	assert.EqualValues(t, v3, "3")
-
 }

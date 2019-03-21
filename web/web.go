@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"short-url/conf"
 	"short-url/dto"
+	"short-url/short"
 	"strings"
 	"time"
 )
@@ -76,7 +77,7 @@ func CompressURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var shortenedURL string
-	shortenedURL, err = short.Shorter.Short(shortReq.LongURL)
+	shortenedURL, err = short.Short(shortReq.LongURL)
 	shortenedURL = (&url.URL{
 		Scheme: conf.Conf.Schema,
 		Host:   conf.Conf.DomainName,
@@ -85,11 +86,11 @@ func CompressURL(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("short url error. %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
-		errMsg, _ := json.Marshal(errorResp{Msg: http.StatusText(http.StatusInternalServerError)})
+		errMsg, _ := json.Marshal(dto.ErrorResp{Msg: http.StatusText(http.StatusInternalServerError)})
 		w.Write(errMsg)
 		return
 	} else {
-		shortResp, _ := json.Marshal(shortResp{ShortURL: shortenedURL})
+		shortResp, _ := json.Marshal(dto.ShortResp{ShortURL: shortenedURL})
 		w.Write(shortResp)
 	}
 }

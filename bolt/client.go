@@ -21,7 +21,7 @@ func NewBoltClient(dbPath string, fileMode os.FileMode) *boltClient {
 func (client boltClient) getDB() (*bolt.DB, error) {
 	// Open the my.db data file in your current directory.
 	// It will be created if it doesn't exist.
-	db, err := bolt.Open(client.dbPath, client.fileMode, &bolt.Options{Timeout: 5 * time.Second})
+	db, err := bolt.Open(client.dbPath, client.fileMode, &bolt.Options{Timeout: 2 * time.Second})
 	if err != nil {
 		log.Errorf("Open bolt db error. %v", err)
 		return nil, err
@@ -62,7 +62,15 @@ func (client boltClient) NextSequence(root string) (uint64, error) {
 		return 0, err
 	}
 	defer tx.Rollback()
-	bucketSequence, err := tx.Bucket([]byte(root)).NextSequence()
+	//rootBucket := tx.Bucket([]byte(root))
+	rootBucket := tx.Bucket([]byte(root))
+	log.Info("CreateBucketIfNotExists")
+	urlBucket, err := rootBucket.CreateBucketIfNotExists([]byte("USERS"))
+	log.Info("urlBucket")
+	if err != nil {
+		return 0, err
+	}
+	bucketSequence, err := urlBucket.NextSequence()
 	if err != nil {
 		return 0, err
 	}
