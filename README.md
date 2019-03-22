@@ -56,6 +56,8 @@ Body
 
 * GET `http://localhost:8080/short-url/{short-url}`
 
+* DELETE `http://localhost:8080/short-url/{short-url}`
+
 * GET `http://localhost:8080/health`
 
 ## Deploy
