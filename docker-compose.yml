@@ -1,0 +1,18 @@
+version: '3.3'
+
+services:
+
+  short-url:
+    build: .
+    image: "xushikuan/short-url:1.0"
+    environment:
+      DEFAULT_DB_NAME: short-url.db
+      DEFAULT_SCHEMA: http
+      DEFAULT_DOMAIN_NAME: 127.0.0.1:8080
+    deploy:
+      replicas: 1
+    volumes:
+      - ${PWD}/data:/go/data
+    ports:
+      - 8080:8080
+    restart: always

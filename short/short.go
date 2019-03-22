@@ -13,7 +13,6 @@ import (
 
 const BaseString = "UgtC0K9wX5IdJcGYBh4QVil1oPakrpMEzAye87Ds3FujOTb6nx2LZNvWmHqSfR"
 const BaseStringLength = uint64(len(BaseString))
-const root = "shorturl"
 
 //const BaseStringLength = uint64(len("Ds3K9ZNvWmHcakr1oPnxh4qpMEzAye8wX5IdJ2LFujUgtC07lOTb6GYBQViSfR"))
 
@@ -56,7 +55,7 @@ func String2Int(shortURL string) (seq uint64) {
 
 func Short(longURL string) (string, error) {
 	boltClient := bolt.NewBoltClient(conf.Conf.DBName, 0600)
-	seq, err := boltClient.NextSequence(root)
+	seq, err := boltClient.NextSequence()
 	if err != nil {
 		log.Printf("get next sequence error. %v", err)
 		return "", errors.New("get next sequence error")
@@ -66,9 +65,32 @@ func Short(longURL string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	err = boltClient.Set(root, shortURL, compress)
+	err = boltClient.Set(shortURL, string(compress))
 	if err != nil {
 		return "", err
 	}
 	return shortURL, nil
+}
+
+func Expand(shortURL string) (string, error) {
+	boltClient := bolt.NewBoltClient(conf.Conf.DBName, 0600)
+	compressJSON, err := boltClient.Get(shortURL)
+	if err != nil {
+		return "", err
+	}
+	var compress dto.CompressDTO
+	if err := json.Unmarshal([]byte(compressJSON), &compress); err != nil {
+		return "", err
+	}
+	compress.ClickTime = compress.ClickTime + 1
+
+	compressJSONWrite, err := json.Marshal(compress)
+	if err != nil {
+		return "", err
+	}
+	err = boltClient.Set(shortURL, string(compressJSONWrite))
+	if err != nil {
+		return "", err
+	}
+	return compress.LongURL, nil
 }

@@ -1,51 +1,46 @@
 package bolt
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-func TestGetDB(t *testing.T) {
-	boltClient := NewBoltClient("short-url.db", 0600)
-	db, err := boltClient.getDB()
-	assert.Nil(t, err)
-	assert.NotNil(t, db)
-}
-
 func TestNextSequence(t *testing.T) {
 	boltClient := NewBoltClient("short-url.db", 0600)
-	seq, err := boltClient.NextSequence("shorturl")
+	err := boltClient.InitialBucket()
 	assert.Nil(t, err)
-	assert.EqualValues(t, seq, 1)
-	seq, err = boltClient.NextSequence("shorturl")
+	for i := 1; i <= 100; i++ {
+		seq, err := boltClient.NextSequence()
+		assert.Nil(t, err)
+		assert.EqualValues(t, int(seq), i)
+	}
+}
+
+func TestForEach(t *testing.T) {
+	boltClient := NewBoltClient("short-url.db", 0600)
+	err := boltClient.InitialBucket()
 	assert.Nil(t, err)
-	assert.EqualValues(t, seq, 2)
-	seq, err = boltClient.NextSequence("shorturl")
-	assert.Nil(t, err)
-	assert.EqualValues(t, seq, 3)
-	seq, err = boltClient.NextSequence("shorturl")
-	assert.Nil(t, err)
-	assert.EqualValues(t, seq, 4)
-	seq, err = boltClient.NextSequence("shorturl")
-	assert.Nil(t, err)
-	assert.EqualValues(t, seq, 5)
-	seq, err = boltClient.NextSequence("shorturl")
-	assert.Nil(t, err)
-	assert.EqualValues(t, seq, 6)
+	result, err := boltClient.ForEach()
+	for key, value := range result {
+		fmt.Println("Key:", key, "Value:", value)
+	}
 }
 
 func TestSetAndGetValue(t *testing.T) {
 	boltClient := NewBoltClient("short-url.db", 0600)
-	boltClient.Set("short", "sag/2$#", []byte("1"))
-	boltClient.Set("short", "!@##$", []byte("2"))
-	boltClient.Set("short", "+_()*(", []byte("3"))
-	v1, err := boltClient.Get("short", "sag/2$#")
+	err := boltClient.InitialBucket()
 	assert.Nil(t, err)
-	assert.EqualValues(t, v1, "1")
-	v2, err := boltClient.Get("short", "!@##$")
+	boltClient.Set("sag/2$#", "1")
+	boltClient.Set("!@##$", "2")
+	boltClient.Set("+_()*(", "3")
+	v1, err := boltClient.Get("sag/2$#")
 	assert.Nil(t, err)
-	assert.EqualValues(t, v2, "2")
-	v3, err := boltClient.Get("short", "+_()*(")
+	assert.EqualValues(t, v1, []byte("1"))
+	v2, err := boltClient.Get("!@##$")
 	assert.Nil(t, err)
-	assert.EqualValues(t, v3, "3")
+	assert.EqualValues(t, string(v2), "2")
+	v3, err := boltClient.Get("+_()*(")
+	assert.Nil(t, err)
+	assert.EqualValues(t, string(v3), "3")
 }
