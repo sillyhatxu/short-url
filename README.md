@@ -41,7 +41,20 @@ Body
 }
 ```
 
-* GET `http://localhost:8080/url-list`
+
+* PUT `http://localhost:8080/short-url/{short-url}`
+
+Body
+
+```
+{
+  "long-url": "https://lh3.googleusercontent.com/krcdFE-XBYxynEbovjtyN6jkMpg5QfZeS1ohq1eAOdyXk3-T6Iu1bnFyTO5U3jS7KIyK_mNiHEIYUKO5eSWHgnSqyz85dtAezNplFwDpxVUzZkJIDc7nLLHu--SnPuDO6EyO3jbj1E9RnEj70UQuUvC116fqoKGunahjNUATuR0OJ_emvKKdiMW8732vmdL_S6otXghWhBccXKOUfFs-jD7yUTIYU-k2xgYWEEs53pgR8wKwi1sJQI8PWa9620wAHJw9ppK9xSANzcA31LIjBQp-AIQ-GEu3yOu2NQ1JPZwh3KEkSMSFk2MpiCeHPgnFLY0wlAfqvNsf33n9VwvtOdfrcwmLia27kzOyCISgTpLx7m72hZa9HMbxVlfa9z5P7lEGBOTXtwaxSKjC08CCLkYka-mXEvX_AtJnMix4krMnWfrDXfMaYPMFwVFJU7yqppMk7G-SjukFm2aBzyaIkWcmh0haKXnz93PxAYx37Fx5F6QwncQpuadCcWu3vf3RWcc5k2WUnntyNvmMmWyoiIa7HguHpStykJCOcHi8CtL9ceLCQQe93OfSMTczKXMXqlRZpc3UC9Pb9jtRqi5G7-pfpME9FTaZ5FHZ6IqP7jv8OcNRd0tvW7SwBRZ-4deKU5_yDqbI33exldHEQX56b5Xx7VrHxFR_tkC828uA2gDMlSVQA35HftwJOs6Qqx8fNmfXhdSnPSlShJTgv7323QfX=w680-h640-no"
+}
+```
+
+* GET `http://localhost:8080/short-url`
+
+* GET `http://localhost:8080/short-url/{short-url}`
 
 * GET `http://localhost:8080/health`
 

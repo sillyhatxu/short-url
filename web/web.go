@@ -23,7 +23,11 @@ func Start() {
 	router.HandleFunc("/compress-url", CompressURL).Methods(http.MethodPost).HeadersRegexp("Content-Type", "application/json")
 	router.HandleFunc("/uncompress-url", UncompressURL).Methods(http.MethodPost).HeadersRegexp("Content-Type", "application/json")
 	router.HandleFunc("/{shortenedURL:[a-zA-Z0-9]{1,11}}", Redirect).Methods(http.MethodGet)
-	router.HandleFunc("/url-list", GetList).Methods(http.MethodGet)
+
+	router.HandleFunc("/short-url", GetList).Methods(http.MethodGet)
+	router.HandleFunc("/short-url/{short-url}", Get).Methods(http.MethodGet)
+	router.HandleFunc("/short-url/{short-url}", Put).Methods(http.MethodPut)
+	router.HandleFunc("/short-url/{short-url}", Delete).Methods(http.MethodDelete)
 	srv := &http.Server{
 		Handler:      router,
 		Addr:         "0.0.0.0:8080",
@@ -53,6 +57,92 @@ func GetList(w http.ResponseWriter, r *http.Request) {
 	}
 	compressArrayJSON, _ := json.Marshal(compressArray)
 	w.Write(compressArrayJSON)
+}
+
+func Get(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	vars := mux.Vars(r)
+	shortURL := vars["short-url"]
+
+	boltClient := bolt.NewBoltClient(conf.Conf.DBName, 0600)
+	result, err := boltClient.Get(shortURL)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		errMsg, _ := json.Marshal(dto.ErrorResp{Msg: http.StatusText(http.StatusInternalServerError)})
+		w.Write(errMsg)
+		return
+	}
+	if result == "" {
+		w.Write([]byte(`{[]}`))
+		return
+	}
+	w.Write([]byte(result))
+}
+
+func Put(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Printf("read short request error. %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		errMsg, _ := json.Marshal(dto.ErrorResp{Msg: http.StatusText(http.StatusInternalServerError)})
+		w.Write(errMsg)
+		return
+	}
+	var shortReq dto.ShortReq
+	err = json.Unmarshal(body, &shortReq)
+	if err != nil {
+		log.Printf("parse short request error. %v", err)
+		w.WriteHeader(http.StatusBadRequest)
+		errMsg, _ := json.Marshal(dto.ErrorResp{Msg: http.StatusText(http.StatusBadRequest)})
+		w.Write(errMsg)
+		return
+	}
+
+	vars := mux.Vars(r)
+	shortURL := vars["short-url"]
+
+	boltClient := bolt.NewBoltClient(conf.Conf.DBName, 0600)
+	result, err := boltClient.Get(shortURL)
+
+	var compress dto.CompressDTO
+	json.Unmarshal([]byte(result), &compress)
+	compress.LongURL = shortReq.LongURL
+
+	compressJSONWrite, err := json.Marshal(compress)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		errMsg, _ := json.Marshal(dto.ErrorResp{Msg: http.StatusText(http.StatusInternalServerError)})
+		w.Write(errMsg)
+		return
+	}
+	err = boltClient.Set(shortURL, string(compressJSONWrite))
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		errMsg, _ := json.Marshal(dto.ErrorResp{Msg: http.StatusText(http.StatusInternalServerError)})
+		w.Write(errMsg)
+		return
+	}
+	w.Write([]byte(`{"Code":"SUCCESS","Msg":"Update success"}`))
+}
+
+func Delete(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	vars := mux.Vars(r)
+	shortURL := vars["short-url"]
+
+	boltClient := bolt.NewBoltClient(conf.Conf.DBName, 0600)
+	err := boltClient.Delete(shortURL)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		errMsg, _ := json.Marshal(dto.ErrorResp{Msg: http.StatusText(http.StatusInternalServerError)})
+		w.Write(errMsg)
+		return
+	}
+	w.Write([]byte(`{"Code":"SUCCESS","Msg":"Delete Success"}`))
 }
 
 func CheckHealth(w http.ResponseWriter, r *http.Request) {

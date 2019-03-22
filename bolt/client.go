@@ -68,6 +68,31 @@ func (client boltClient) ForEach() (map[string]string, error) {
 	return result, nil
 }
 
+func (client boltClient) Delete(key string) error {
+	db, err := bolt.Open(client.dbPath, client.fileMode, client.options)
+	if err != nil {
+		log.Errorf("Open bolt db error. %v", err)
+		return err
+	}
+	defer db.Close()
+	tx, err := db.Begin(true)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	rootBucket := tx.Bucket([]byte(ROOT_BUCKET))
+	if rootBucket == nil {
+		return errors.New("Unknown bucket")
+	}
+	err = rootBucket.Delete([]byte(key))
+	if err != nil {
+		return err
+	}
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+	return nil
+}
 func (client boltClient) Get(key string) (string, error) {
 	db, err := bolt.Open(client.dbPath, client.fileMode, client.options)
 	if err != nil {
